@@ -339,29 +339,110 @@ function SectionTitle({ p, eyebrow, title, text }) {
 }
 
 function BackgroundOrbs({ p }) {
+  const reduce = useReducedMotion();
+  const orbData = [
+    { c: p.blue, size: 420, left: "4%", top: "4%", dur: 12, delay: 0 },
+    { c: p.green, size: 360, left: "64%", top: "0%", dur: 14, delay: 0.7 },
+    { c: p.purple, size: 390, left: "72%", top: "58%", dur: 16, delay: 1.1 },
+    { c: p.amber, size: 310, left: "14%", top: "68%", dur: 13, delay: 1.6 },
+  ];
+
   return (
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-      {[p.blue, p.green, p.purple, p.amber].map((c, i) => (
+      <motion.div
+        aria-hidden="true"
+        animate={
+          reduce
+            ? undefined
+            : {
+                backgroundPosition: ["0% 0%", "100% 80%", "0% 0%"],
+                opacity: [0.18, 0.34, 0.18],
+              }
+        }
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: "absolute",
+          inset: "-20%",
+          backgroundImage: `
+            linear-gradient(${p.line} 1px, transparent 1px),
+            linear-gradient(90deg, ${p.line} 1px, transparent 1px)
+          `,
+          backgroundSize: "72px 72px",
+          maskImage: "radial-gradient(circle at 50% 30%, black, transparent 68%)",
+          WebkitMaskImage: "radial-gradient(circle at 50% 30%, black, transparent 68%)",
+        }}
+      />
+
+      {orbData.map((orb, i) => (
         <motion.div
-          key={c}
-          animate={{
-            x: [0, i % 2 ? -26 : 26, 0],
-            y: [0, i % 2 ? 18 : -18, 0],
-            scale: [1, 1.08, 1],
-          }}
-          transition={{ duration: 7 + i, repeat: Infinity, ease: "easeInOut" }}
+          key={`${orb.c}-${i}`}
+          animate={
+            reduce
+              ? undefined
+              : {
+                  x: [0, i % 2 ? -90 : 90, i % 2 ? 60 : -60, 0],
+                  y: [0, i % 2 ? 56 : -56, i % 2 ? -46 : 46, 0],
+                  scale: [1, 1.16, 0.92, 1],
+                  opacity: [0.7, 1, 0.82, 0.7],
+                }
+          }
+          transition={{ duration: orb.dur, repeat: Infinity, ease: "easeInOut", delay: orb.delay }}
           style={{
             position: "absolute",
-            width: 300 - i * 34,
-            height: 300 - i * 34,
+            width: orb.size,
+            height: orb.size,
             borderRadius: "50%",
-            background: `radial-gradient(circle, ${c}24, transparent 66%)`,
-            filter: "blur(18px)",
-            left: `${8 + i * 24}%`,
-            top: `${6 + (i % 2) * 62}%`,
+            background: `radial-gradient(circle, ${orb.c}2d 0%, ${orb.c}18 32%, transparent 70%)`,
+            filter: "blur(22px)",
+            left: orb.left,
+            top: orb.top,
           }}
         />
       ))}
+
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.span
+          key={i}
+          aria-hidden="true"
+          animate={
+            reduce
+              ? undefined
+              : {
+                  y: ["120vh", "-20vh"],
+                  x: [0, i % 2 ? 80 : -80, 0],
+                  opacity: [0, 0.42, 0],
+                  rotate: [0, i % 2 ? 28 : -28],
+                }
+          }
+          transition={{ duration: 12 + i * 1.4, repeat: Infinity, ease: "linear", delay: i * 1.15 }}
+          style={{
+            position: "absolute",
+            left: `${10 + i * 15}%`,
+            bottom: "-18vh",
+            width: 2,
+            height: 150 + i * 14,
+            borderRadius: 999,
+            background: `linear-gradient(180deg, transparent, ${i % 2 ? p.blue : p.green}66, transparent)`,
+            filter: "blur(.2px)",
+          }}
+        />
+      ))}
+
+      <motion.div
+        aria-hidden="true"
+        animate={reduce ? undefined : { x: ["-35%", "35%", "-35%"], opacity: [0.08, 0.22, 0.08] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: "absolute",
+          left: "10%",
+          right: "10%",
+          top: "18%",
+          height: 260,
+          background: `linear-gradient(90deg, transparent, ${p.blue}24, ${p.green}18, transparent)`,
+          filter: "blur(32px)",
+          transform: "rotate(-8deg)",
+        }}
+      />
     </div>
   );
 }
@@ -383,9 +464,11 @@ function GhostGlass({ p, statusColor }) {
             reduce
               ? undefined
               : {
-                  y: [0, -12, 0],
-                  x: [0, index % 2 ? -8 : 8, 0],
-                  opacity: [0.28, 0.48, 0.28],
+                  y: [0, -18, 0],
+                  x: [0, index % 2 ? -18 : 18, 0],
+                  rotate: [panel.rotate, panel.rotate + (index % 2 ? -2.2 : 2.2), panel.rotate],
+                  scale: [1, 1.035, 1],
+                  opacity: [0.26, 0.54, 0.26],
                 }
           }
           transition={{ duration: 5.5 + index, repeat: Infinity, ease: "easeInOut", delay: panel.delay }}
@@ -395,7 +478,7 @@ function GhostGlass({ p, statusColor }) {
             left: panel.left,
             width: panel.width,
             height: panel.height,
-            transform: `rotate(${panel.rotate}deg)`,
+            rotate: panel.rotate,
             borderRadius: 28,
             background: `linear-gradient(135deg, rgba(255,255,255,.13), ${panel.color}16)`,
             border: `1px solid ${panel.color}55`,
@@ -908,6 +991,7 @@ export default function App() {
     @keyframes scanLine{0%{transform:translateY(-120%);opacity:0}30%{opacity:1}100%{transform:translateY(360%);opacity:0}}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
     @keyframes ghostFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @keyframes ambientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
     .ghostSurface{
       background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.045));
       border:1px solid rgba(255,255,255,.18);
