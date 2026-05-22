@@ -311,6 +311,66 @@ function BackgroundOrbs({ p }) {
   );
 }
 
+function GhostGlass({ p, statusColor }) {
+  const reduce = useReducedMotion();
+  const panels = [
+    { top: "12%", left: "62%", width: 310, height: 170, color: p.blue, rotate: -5, delay: 0 },
+    { top: "25%", left: "70%", width: 240, height: 120, color: p.green, rotate: 7, delay: 0.4 },
+    { top: "44%", left: "58%", width: 280, height: 145, color: p.purple, rotate: -2, delay: 0.8 },
+  ];
+
+  return (
+    <div className="hideMobile" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+      {panels.map((panel, index) => (
+        <motion.div
+          key={index}
+          animate={
+            reduce
+              ? undefined
+              : {
+                  y: [0, -12, 0],
+                  x: [0, index % 2 ? -8 : 8, 0],
+                  opacity: [0.28, 0.48, 0.28],
+                }
+          }
+          transition={{ duration: 5.5 + index, repeat: Infinity, ease: "easeInOut", delay: panel.delay }}
+          style={{
+            position: "absolute",
+            top: panel.top,
+            left: panel.left,
+            width: panel.width,
+            height: panel.height,
+            transform: `rotate(${panel.rotate}deg)`,
+            borderRadius: 28,
+            background: `linear-gradient(135deg, rgba(255,255,255,.13), ${panel.color}16)`,
+            border: `1px solid ${panel.color}55`,
+            backdropFilter: "blur(22px) saturate(145%)",
+            WebkitBackdropFilter: "blur(22px) saturate(145%)",
+            boxShadow: `0 30px 110px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.16)`,
+          }}
+        >
+          <motion.div
+            animate={reduce ? undefined : { x: ["-80%", "150%"] }}
+            transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: index * 0.7 }}
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              width: 70,
+              transform: "skewX(-18deg)",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent)",
+            }}
+          />
+          <div style={{ position: "absolute", inset: 16, borderRadius: 20, border: `1px solid ${p.line}` }} />
+          <div style={{ position: "absolute", left: 22, right: 22, top: 26, height: 10, borderRadius: 99, background: `${panel.color}28` }} />
+          <div style={{ position: "absolute", left: 22, right: 80, top: 50, height: 9, borderRadius: 99, background: "rgba(255,255,255,.10)" }} />
+          <div style={{ position: "absolute", left: 22, top: 82, width: 74, height: 34, borderRadius: 14, background: `${statusColor}1f`, border: `1px solid ${statusColor}44` }} />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 function StatusBurst({ p, color, status }) {
   return (
     <div style={{ position: "relative", display: "inline-flex" }}>
@@ -726,6 +786,14 @@ export default function App() {
     @keyframes pulseDot{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.35);opacity:1}}
     @keyframes scanLine{0%{transform:translateY(-120%);opacity:0}30%{opacity:1}100%{transform:translateY(360%);opacity:0}}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes ghostFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .ghostSurface{
+      background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.045));
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(20px) saturate(145%);
+      -webkit-backdrop-filter:blur(20px) saturate(145%);
+      box-shadow:0 28px 90px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.16);
+    }
     a:focus-visible,button:focus-visible,input:focus-visible{
       outline:2px solid ${p.blue};outline-offset:3px;border-radius:6px;
     }
@@ -760,6 +828,7 @@ export default function App() {
     >
       <style>{css}</style>
       <BackgroundOrbs p={p} />
+      <GhostGlass p={p} statusColor={statusColor} />
 
       <nav style={{ position: "sticky", top: 0, zIndex: 20, background: p.glass, backdropFilter: "blur(18px)", borderBottom: `1px solid ${p.line}` }}>
         <div className="wrap" style={{ height: 76, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -805,6 +874,37 @@ export default function App() {
             Ver telas separadas
           </a>
         </div>
+
+        <motion.div
+          className="ghostSurface hideMobile"
+          initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.8, delay: 0.25 }}
+          style={{
+            position: "absolute",
+            right: 24,
+            top: 68,
+            width: 390,
+            minHeight: 245,
+            borderRadius: 30,
+            padding: 18,
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <Pill p={p} c={statusColor}>{result?.status || "AGUARDANDO"}</Pill>
+            <LiveClock p={p} compact now={now} />
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ height: 13, width: "72%", borderRadius: 99, background: `${p.text}18` }} />
+            <div style={{ height: 13, width: "54%", borderRadius: 99, background: `${p.text}10` }} />
+            <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ height: 74, borderRadius: 20, background: `${p.blue}18`, border: `1px solid ${p.blue}33` }} />
+              <div style={{ height: 74, borderRadius: 20, background: `${p.green}18`, border: `1px solid ${p.green}33` }} />
+            </div>
+            <div style={{ height: 46, borderRadius: 18, background: `${statusColor}18`, border: `1px solid ${statusColor}44` }} />
+          </div>
+        </motion.div>
       </section>
 
       <section className="wrap" style={{ padding: "0 24px 54px", position: "relative", zIndex: 1 }}>
