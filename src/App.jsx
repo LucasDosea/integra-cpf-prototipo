@@ -199,7 +199,62 @@ function Card({ p, children, style, delay = 0 }) {
         ...style,
       }}
     >
-      {children}
+      {!reduce && (
+        <motion.div
+          aria-hidden="true"
+          initial={{ x: "-120%", opacity: 0 }}
+          whileInView={{ x: "120%", opacity: [0, 0.45, 0] }}
+          viewport={{ once: false, amount: 0.25 }}
+          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 5.5, ease: "easeInOut" }}
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            width: 90,
+            transform: "skewX(-18deg)",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+      )}
+      <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+    </motion.div>
+  );
+}
+
+function AnimatedBlock({ p, children, style, danger = false, delay = 0 }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? false : { opacity: 0, y: 10, scale: 0.985, filter: "blur(4px)" }}
+      whileInView={reduce ? undefined : { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      whileHover={reduce ? undefined : { y: -2, scale: 1.01, borderColor: danger ? p.red : p.blue }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.42, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        ...style,
+      }}
+    >
+      {!reduce && (
+        <motion.span
+          aria-hidden="true"
+          animate={{ x: ["-140%", "160%"] }}
+          transition={{ duration: 3.4, repeat: Infinity, repeatDelay: 6, ease: "easeInOut" }}
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            width: 55,
+            transform: "skewX(-18deg)",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
     </motion.div>
   );
 }
@@ -406,7 +461,8 @@ function StatusBurst({ p, color, status }) {
 
 function SessionCard({ p, title, lines, highlight }) {
   return (
-    <div
+    <AnimatedBlock
+      p={p}
       style={{
         padding: 16,
         borderRadius: 18,
@@ -431,7 +487,7 @@ function SessionCard({ p, title, lines, highlight }) {
           {l}
         </div>
       ))}
-    </div>
+    </AnimatedBlock>
   );
 }
 
@@ -439,6 +495,7 @@ function ProcessStep({ p, active, done, icon, title, text, color, index }) {
   return (
     <motion.div
       animate={{ opacity: active ? 1 : 0.45, x: active ? 0 : -8, scale: active ? 1 : 0.985 }}
+      whileHover={{ x: active ? 4 : 0, scale: active ? 1.01 : 0.985 }}
       transition={{ duration: 0.35, delay: index * 0.05 }}
       style={{
         display: "flex",
@@ -532,13 +589,17 @@ function FlowRail({ p, stage }) {
 
 function MiniRow({ p, icon, label, value, danger }) {
   return (
-    <div style={{ display: "flex", gap: 12, padding: 14, borderRadius: 18, background: p.soft, border: `1px solid ${danger ? p.red : p.line}` }}>
+    <AnimatedBlock
+      p={p}
+      danger={danger}
+      style={{ display: "flex", gap: 12, padding: 14, borderRadius: 18, background: p.soft, border: `1px solid ${danger ? p.red : p.line}` }}
+    >
       <div>{icon}</div>
       <div>
         <strong>{label}</strong>
         <p style={{ margin: "5px 0 0", color: danger ? p.red : p.muted, lineHeight: 1.45 }}>{value}</p>
       </div>
-    </div>
+    </AnimatedBlock>
   );
 }
 
@@ -634,10 +695,15 @@ function AuditView({ p, r, eventTime, token, denied, logs, protocol }) {
       <div className="grid2">
         <div style={{ display: "grid", gap: 10 }}>
           {rows.map(([k, v]) => (
-            <div key={k} style={{ display: "grid", gridTemplateColumns: "145px 1fr", gap: 12, padding: "13px 14px", borderRadius: 14, background: p.soft, border: `1px solid ${p.line}` }}>
+            <motion.div
+              key={k}
+              whileHover={{ x: 4, borderColor: p.blue }}
+              transition={{ duration: 0.2 }}
+              style={{ display: "grid", gridTemplateColumns: "145px 1fr", gap: 12, padding: "13px 14px", borderRadius: 14, background: p.soft, border: `1px solid ${p.line}` }}
+            >
               <strong style={{ color: p.muted }}>{k}</strong>
               <span style={{ fontFamily: k === "Token" || k === "Protocolo" ? "ui-monospace, SFMono-Regular, Menlo, monospace" : "inherit" }}>{v}</span>
-            </div>
+            </motion.div>
           ))}
         </div>
         <div style={{ display: "grid", gap: 10 }}>
@@ -649,6 +715,8 @@ function AuditView({ p, r, eventTime, token, denied, logs, protocol }) {
                 initial={{ opacity: 0, x: 20, scale: 0.98 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -20 }}
+                whileHover={{ x: -4, scale: 1.01 }}
+                transition={{ duration: 0.24 }}
                 style={{
                   padding: 13,
                   borderRadius: 14,
@@ -681,8 +749,17 @@ function CompareCard({ p, icon, title, items }) {
       {icon}
       <h3>{title}</h3>
       <ul style={{ margin: 0, paddingLeft: 18, color: p.muted, lineHeight: 1.75 }}>
-        {items.map((i) => (
-          <li key={i}>{i}</li>
+        {items.map((i, index) => (
+          <motion.li
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            whileHover={{ x: 4, color: p.text }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.28, delay: index * 0.04 }}
+          >
+            {i}
+          </motion.li>
         ))}
       </ul>
     </Card>
