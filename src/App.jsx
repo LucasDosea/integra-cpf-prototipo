@@ -1021,8 +1021,17 @@ export default function App() {
         <motion.div
           className="ghostSurface hideMobile"
           initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.8, delay: 0.25 }}
+          animate={{
+            opacity: 1,
+            y: [0, -8, 0],
+            filter: "blur(0px)",
+            rotate: [-0.6, 0.6, -0.6],
+          }}
+          transition={{
+            opacity: { duration: 0.8, delay: 0.25 },
+            y: { duration: 5.2, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 6.4, repeat: Infinity, ease: "easeInOut" },
+          }}
           style={{
             position: "absolute",
             right: 24,
@@ -1034,18 +1043,108 @@ export default function App() {
             zIndex: 1,
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <Pill p={p} c={statusColor}>{result?.status || "AGUARDANDO"}</Pill>
-            <LiveClock p={p} compact now={now} />
-          </div>
-          <div style={{ display: "grid", gap: 10 }}>
-            <div style={{ height: 13, width: "72%", borderRadius: 99, background: `${p.text}18` }} />
-            <div style={{ height: 13, width: "54%", borderRadius: 99, background: `${p.text}10` }} />
-            <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div style={{ height: 74, borderRadius: 20, background: `${p.blue}18`, border: `1px solid ${p.blue}33` }} />
-              <div style={{ height: 74, borderRadius: 20, background: `${p.green}18`, border: `1px solid ${p.green}33` }} />
+          <motion.div
+            aria-hidden="true"
+            animate={{ x: ["-120%", "160%"] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              width: 90,
+              transform: "skewX(-18deg)",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <motion.div
+                key={result?.status || "AGUARDANDO"}
+                initial={{ scale: 0.86, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
+              >
+                <Pill p={p} c={statusColor}>{result?.status || "AGUARDANDO"}</Pill>
+              </motion.div>
+              <LiveClock p={p} compact now={now} />
             </div>
-            <div style={{ height: 46, borderRadius: 18, background: `${statusColor}18`, border: `1px solid ${statusColor}44` }} />
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {[72, 54, 82].map((w, index) => (
+                <motion.div
+                  key={index}
+                  animate={{ width: [`${w}%`, `${Math.max(38, w - 18)}%`, `${w}%`], opacity: [0.55, 0.95, 0.55] }}
+                  transition={{ duration: 2.6 + index * 0.45, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }}
+                  style={{
+                    height: index === 2 ? 8 : 13,
+                    borderRadius: 99,
+                    background: index === 0 ? `${p.text}18` : index === 1 ? `${p.text}10` : `${statusColor}30`,
+                  }}
+                />
+              ))}
+
+              <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[p.blue, p.green].map((blockColor, index) => (
+                  <motion.div
+                    key={blockColor}
+                    animate={{
+                      y: [0, index === 0 ? -5 : 5, 0],
+                      scale: [1, 1.035, 1],
+                      boxShadow: [`0 0 0 ${blockColor}00`, `0 0 28px ${blockColor}33`, `0 0 0 ${blockColor}00`],
+                    }}
+                    transition={{ duration: 3.2 + index * 0.6, repeat: Infinity, ease: "easeInOut" }}
+                    style={{
+                      height: 74,
+                      borderRadius: 20,
+                      background: `${blockColor}18`,
+                      border: `1px solid ${blockColor}33`,
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <motion.div
+                      animate={{ x: ["-70%", "140%"] }}
+                      transition={{ duration: 2.7, repeat: Infinity, ease: "easeInOut", delay: index * 0.45 }}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        bottom: 0,
+                        width: 45,
+                        transform: "skewX(-16deg)",
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent)",
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div
+                animate={{
+                  scale: [1, 1.025, 1],
+                  backgroundColor: [`${statusColor}14`, `${statusColor}24`, `${statusColor}14`],
+                  borderColor: [`${statusColor}44`, `${statusColor}`, `${statusColor}44`],
+                }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  height: 46,
+                  borderRadius: 18,
+                  background: `${statusColor}18`,
+                  border: `1px solid ${statusColor}44`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "0 14px",
+                }}
+              >
+                <motion.span
+                  animate={{ scale: [1, 1.45, 1], opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ width: 9, height: 9, borderRadius: 999, background: statusColor, boxShadow: `0 0 22px ${statusColor}` }}
+                />
+                <span style={{ color: p.muted, fontSize: 12, fontWeight: 800 }}>processamento visual contínuo</span>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </section>
