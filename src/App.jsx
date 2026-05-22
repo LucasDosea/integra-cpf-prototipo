@@ -509,6 +509,147 @@ function GhostGlass({ p, statusColor }) {
   );
 }
 
+
+function OriginalSitePrototypePreview({ p, result, statusColor, now }) {
+  const reduce = useReducedMotion();
+  const statuses = [
+    { label: "LIBERADO", color: p.green },
+    { label: "EM DIA", color: p.blue },
+    { label: "PENDENTE", color: p.amber },
+    { label: "NÃO LOCALIZADO", color: p.red },
+  ];
+
+  return (
+    <div className="hideMobile" style={{ position: "absolute", top: "40%", right: "1%", width: 520, opacity: 0.42, pointerEvents: "none", zIndex: 0 }}>
+      <style>{`
+        @keyframes notebook-float {
+          0%, 100% { transform: translateY(0px) rotate(-2deg); }
+          50% { transform: translateY(-10px) rotate(-2deg); }
+        }
+        @keyframes notebook-bar-load {
+          0% { width: 0%; opacity: .45; }
+          50% { width: 100%; opacity: 1; }
+          100% { width: 100%; opacity: .45; }
+        }
+        @keyframes notebook-scan-line {
+          0% { top: 0; opacity: 0; }
+          45% { opacity: .6; }
+          100% { top: 100%; opacity: 0; }
+        }
+        @keyframes notebook-line-pulse {
+          0%, 100% { opacity: .32; transform: scaleX(.78); }
+          50% { opacity: .88; transform: scaleX(1); }
+        }
+      `}</style>
+
+      <motion.div
+        animate={reduce ? undefined : { y: [0, -8, 0], rotate: [-2, -1.2, -2] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          width: "100%",
+          aspectRatio: "16/10",
+          background: p.text,
+          borderRadius: "14px 14px 4px 4px",
+          padding: 8,
+          boxShadow: `0 40px 100px -35px ${p.blue}`,
+          position: "relative",
+          animation: reduce ? "none" : "notebook-float 6s ease-in-out infinite",
+        }}
+      >
+        <div style={{ background: p.bg, height: "100%", borderRadius: 9, overflow: "hidden", position: "relative", border: `1px solid ${p.line}` }}>
+          <motion.div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              height: 2,
+              background: `linear-gradient(90deg, transparent, ${statusColor}, transparent)`,
+              boxShadow: `0 0 24px ${statusColor}`,
+              animation: reduce ? "none" : "notebook-scan-line 3.4s ease-in-out infinite",
+              zIndex: 4,
+            }}
+          />
+
+          <div style={{ height: 34, background: p.panel, borderBottom: `1px solid ${p.line}`, display: "flex", alignItems: "center", gap: 7, padding: "0 12px" }}>
+            <span style={{ width: 9, height: 9, borderRadius: 99, background: p.red }} />
+            <span style={{ width: 9, height: 9, borderRadius: 99, background: p.amber }} />
+            <span style={{ width: 9, height: 9, borderRadius: 99, background: p.green }} />
+            <span style={{ marginLeft: 10, color: p.muted, fontSize: 10, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>imunizaju.demo/sistema</span>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1.05fr .95fr", gap: 12, padding: 16 }}>
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ color: p.muted, fontSize: 9, letterSpacing: ".18em", fontWeight: 900 }}>TERMINAL DE CONSULTA</div>
+                <LiveClock p={p} compact now={now} />
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 16, background: p.soft, border: `1px solid ${p.line}` }}>
+                <div style={{ height: 8, width: "56%", background: `${p.text}18`, borderRadius: 99, marginBottom: 10 }} />
+                <div style={{ height: 38, borderRadius: 12, background: p.panelStrong, border: `1px solid ${p.line}`, display: "flex", alignItems: "center", padding: "0 12px", color: p.muted, fontSize: 13, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                  ***.456.789-**
+                </div>
+                <div style={{ marginTop: 10, height: 7, width: "100%", borderRadius: 99, background: `${p.blue}18`, overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: `linear-gradient(90deg, ${p.blue}, ${p.green})`, animation: reduce ? "none" : "notebook-bar-load 3.5s ease-in-out infinite" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {[p.amber, p.blue, p.green].map((color, i) => (
+                  <motion.div
+                    key={color}
+                    animate={reduce ? undefined : { y: [0, i % 2 ? 4 : -4, 0], opacity: [.56, 1, .56] }}
+                    transition={{ duration: 2.5 + i * .4, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ height: 42, borderRadius: 13, background: `${color}18`, border: `1px solid ${color}33` }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ padding: 14, borderRadius: 16, background: `${statusColor}14`, border: `1px solid ${statusColor}66`, minHeight: 96 }}>
+                <div style={{ color: p.muted, fontSize: 9, letterSpacing: ".16em", fontWeight: 900, marginBottom: 9 }}>STATUS ATUAL</div>
+                <motion.div
+                  key={result?.status || "status"}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: .35 }}
+                  style={{ color: statusColor, fontSize: 18, fontWeight: 950, letterSpacing: ".08em" }}
+                >
+                  {result?.status || "AGUARDANDO"}
+                </motion.div>
+                <div style={{ marginTop: 8, display: "grid", gap: 5 }}>
+                  {[74, 52, 88].map((width, i) => (
+                    <div key={i} style={{ height: 6, width: `${width}%`, borderRadius: 99, background: `${p.text}${i === 0 ? "18" : "10"}`, transformOrigin: "left", animation: reduce ? "none" : `notebook-line-pulse ${2.4 + i * .35}s ease-in-out infinite` }} />
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: 7 }}>
+                {statuses.map((item, i) => (
+                  <motion.div
+                    key={item.label}
+                    animate={reduce ? undefined : { x: [0, i % 2 ? 4 : -4, 0], opacity: result?.status === item.label ? [0.7, 1, 0.7] : [0.28, 0.55, 0.28] }}
+                    transition={{ duration: 2.8 + i * .24, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 12, background: `${item.color}12`, border: `1px solid ${item.color}30` }}
+                  >
+                    <span style={{ width: 7, height: 7, borderRadius: 99, background: item.color, boxShadow: `0 0 14px ${item.color}` }} />
+                    <span style={{ color: p.muted, fontSize: 10, fontWeight: 800 }}>{item.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ height: 16, width: "108%", marginLeft: "-4%", background: `linear-gradient(180deg, ${p.text}, rgba(255,255,255,.78))`, borderRadius: "0 0 22px 22px", boxShadow: "0 18px 40px rgba(0,0,0,.25)" }} />
+      </motion.div>
+    </div>
+  );
+}
+
+
 function StatusBurst({ p, color, status }) {
   return (
     <div style={{ position: "relative", display: "inline-flex" }}>
@@ -1034,6 +1175,7 @@ export default function App() {
       <style>{css}</style>
       <BackgroundOrbs p={p} />
       <GhostGlass p={p} statusColor={statusColor} />
+      <OriginalSitePrototypePreview p={p} result={result} statusColor={statusColor} now={now} />
 
       <nav style={{ position: "sticky", top: 0, zIndex: 20, background: p.glass, backdropFilter: "blur(18px)", borderBottom: `1px solid ${p.line}` }}>
         <div className="wrap" style={{ height: 76, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1042,7 +1184,7 @@ export default function App() {
               <ShieldCheck color="white" />
             </motion.div>
             <div>
-              <strong>IntegraCPF</strong>
+              <strong>ImunizAju</strong>
               <div style={{ fontSize: 11, color: p.muted, letterSpacing: ".14em" }}>PROTÓTIPO FINAL · INTERFACES</div>
             </div>
           </div>
@@ -1102,135 +1244,7 @@ export default function App() {
           </a>
         </div>
 
-        <motion.div
-          className="ghostSurface hideMobile"
-          initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-          animate={{
-            opacity: 1,
-            y: [0, -8, 0],
-            filter: "blur(0px)",
-            rotate: [-0.6, 0.6, -0.6],
-          }}
-          transition={{
-            opacity: { duration: 0.8, delay: 0.25 },
-            y: { duration: 5.2, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 6.4, repeat: Infinity, ease: "easeInOut" },
-          }}
-          style={{
-            position: "absolute",
-            right: 24,
-            top: 68,
-            width: 390,
-            minHeight: 245,
-            borderRadius: 30,
-            padding: 18,
-            zIndex: 1,
-          }}
-        >
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: ["-120%", "160%"] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              width: 90,
-              transform: "skewX(-18deg)",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent)",
-              pointerEvents: "none",
-            }}
-          />
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <motion.div
-                key={result?.status || "AGUARDANDO"}
-                initial={{ scale: 0.86, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 18 }}
-              >
-                <Pill p={p} c={statusColor}>{result?.status || "AGUARDANDO"}</Pill>
-              </motion.div>
-              <LiveClock p={p} compact now={now} />
-            </div>
-
-            <div style={{ display: "grid", gap: 10 }}>
-              {[72, 54, 82].map((w, index) => (
-                <motion.div
-                  key={index}
-                  animate={{ width: [`${w}%`, `${Math.max(38, w - 18)}%`, `${w}%`], opacity: [0.55, 0.95, 0.55] }}
-                  transition={{ duration: 2.6 + index * 0.45, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }}
-                  style={{
-                    height: index === 2 ? 8 : 13,
-                    borderRadius: 99,
-                    background: index === 0 ? `${p.text}18` : index === 1 ? `${p.text}10` : `${statusColor}30`,
-                  }}
-                />
-              ))}
-
-              <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {[p.blue, p.green].map((blockColor, index) => (
-                  <motion.div
-                    key={blockColor}
-                    animate={{
-                      y: [0, index === 0 ? -5 : 5, 0],
-                      scale: [1, 1.035, 1],
-                      boxShadow: [`0 0 0 ${blockColor}00`, `0 0 28px ${blockColor}33`, `0 0 0 ${blockColor}00`],
-                    }}
-                    transition={{ duration: 3.2 + index * 0.6, repeat: Infinity, ease: "easeInOut" }}
-                    style={{
-                      height: 74,
-                      borderRadius: 20,
-                      background: `${blockColor}18`,
-                      border: `1px solid ${blockColor}33`,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <motion.div
-                      animate={{ x: ["-70%", "140%"] }}
-                      transition={{ duration: 2.7, repeat: Infinity, ease: "easeInOut", delay: index * 0.45 }}
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        bottom: 0,
-                        width: 45,
-                        transform: "skewX(-16deg)",
-                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent)",
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div
-                animate={{
-                  scale: [1, 1.025, 1],
-                  backgroundColor: [`${statusColor}14`, `${statusColor}24`, `${statusColor}14`],
-                  borderColor: [`${statusColor}44`, `${statusColor}`, `${statusColor}44`],
-                }}
-                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  height: 46,
-                  borderRadius: 18,
-                  background: `${statusColor}18`,
-                  border: `1px solid ${statusColor}44`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "0 14px",
-                }}
-              >
-                <motion.span
-                  animate={{ scale: [1, 1.45, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ width: 9, height: 9, borderRadius: 999, background: statusColor, boxShadow: `0 0 22px ${statusColor}` }}
-                />
-                <span style={{ color: p.muted, fontSize: 12, fontWeight: 800 }}>processamento visual contínuo</span>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
+        {/* Preview de notebook reaproveitado do protótipo original fica animando no fundo. */}
       </section>
 
       <section className="wrap" style={{ padding: "0 24px 54px", position: "relative", zIndex: 1 }}>
