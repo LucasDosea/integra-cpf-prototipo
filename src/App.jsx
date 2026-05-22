@@ -3,29 +3,22 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowRight,
-  Building2,
   CalendarCheck,
   CheckCircle2,
   Clock3,
   Database,
-  Eye,
   EyeOff,
   FileSearch,
-  Fingerprint,
   GraduationCap,
   HeartPulse,
   Lock,
   Moon,
   Play,
-  Radio,
-  Search,
   ShieldCheck,
   Sparkles,
   Sun,
-  TerminalSquare,
   UserCheck,
   XCircle,
-  Zap,
 } from "lucide-react";
 
 const themes = {
@@ -64,9 +57,9 @@ const themes = {
 };
 
 const agent = {
-  name: "Ana Paula Santos",
+  name: "Servidor escolar demonstrativo",
   role: "Auxiliar de Secretaria Escolar",
-  unit: "Escola Municipal João Alves Filho",
+  unit: "Unidade escolar demonstrativa",
   profile: "Secretaria Escolar",
   device: "Secretaria-PC-03",
   ip: "200.150.42.18",
@@ -76,10 +69,10 @@ const agent = {
 const cases = {
   liberado: {
     cpf: "12345678900",
-    name: "Helena S. Andrade",
+    name: "Aluno demonstrativo A",
     birth: "12/03/2018",
     className: "3º ano B",
-    responsible: "Mariana Andrade",
+    responsible: "Responsável demonstrativo A",
     status: "LIBERADO",
     color: "green",
     educationTitle: "Matrícula autorizada",
@@ -92,10 +85,10 @@ const cases = {
   },
   pendente: {
     cpf: "11122233344",
-    name: "Miguel A. Santos",
+    name: "Aluno demonstrativo B",
     birth: "04/09/2015",
     className: "5º ano A",
-    responsible: "Carlos Santos",
+    responsible: "Responsável demonstrativo B",
     status: "PENDENTE",
     color: "amber",
     educationTitle: "Orientar responsável",
@@ -103,7 +96,7 @@ const cases = {
     healthTitle: "Pendência administrativa",
     healthMessage: "Existe uma pendência simulada que exige atualização presencial.",
     familyMessage: "Compareça à UBS indicada para atualização e liberação do processo.",
-    nextStep: "UBS Atalaia · 23/05/2026 · 08:30",
+    nextStep: "UBS Atalaia · horário demonstrativo",
     http: "200 OK",
   },
   nao: {
@@ -112,10 +105,10 @@ const cases = {
     birth: "—",
     className: "—",
     responsible: "—",
-    status: "NÃO LOCALIZADO",
+    status: "DADOS INSUFICIENTES",
     color: "red",
     educationTitle: "Conferência cadastral",
-    educationMessage: "Solicitar conferência dos dados antes de prosseguir.",
+    educationMessage: "Não foi encontrado vínculo suficiente para validação automática.",
     healthTitle: "Vínculo não encontrado",
     healthMessage: "Nenhum vínculo suficiente foi encontrado nos dados simulados.",
     familyMessage: "Procure a unidade responsável para conferência cadastral.",
@@ -125,7 +118,7 @@ const cases = {
 };
 
 function formatCpf(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 11);
   return digits
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d)/, "$1.$2")
@@ -145,8 +138,18 @@ function nowString(date = new Date()) {
   }).format(date);
 }
 
+function makeProtocol(date = new Date()) {
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const da = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  const s = String(date.getSeconds()).padStart(2, "0");
+  return `ICP-${y}${mo}${da}-${h}${mi}${s}`;
+}
+
 function decide(cpf) {
-  const d = cpf.replace(/\D/g, "");
+  const d = String(cpf || "").replace(/\D/g, "");
   if (d.length < 11) return null;
   if (d === cases.liberado.cpf) return cases.liberado;
   if (d === cases.pendente.cpf) return cases.pendente;
@@ -155,7 +158,7 @@ function decide(cpf) {
 }
 
 function makeToken(cpf, date) {
-  const d = (cpf.replace(/\D/g, "") || "00000000000")
+  const d = (String(cpf || "").replace(/\D/g, "") || "00000000000")
     .split("")
     .reverse()
     .join("")
@@ -225,8 +228,7 @@ function Pill({ p, c, children }) {
   );
 }
 
-function LiveClock({ p, compact = false }) {
-  const now = useClock();
+function LiveClock({ p, compact = false, now }) {
   return (
     <motion.span
       animate={{ opacity: [0.78, 1, 0.78] }}
@@ -553,8 +555,9 @@ function FamilyView({ p, r, c }) {
   );
 }
 
-function AuditView({ p, r, eventTime, token, denied, logs }) {
+function AuditView({ p, r, eventTime, token, denied, logs, protocol }) {
   const rows = [
+    ["Protocolo", protocol],
     ["Horário", nowString(eventTime)],
     ["Agente", agent.name],
     ["Perfil", agent.role],
@@ -573,14 +576,14 @@ function AuditView({ p, r, eventTime, token, denied, logs }) {
           {rows.map(([k, v]) => (
             <div key={k} style={{ display: "grid", gridTemplateColumns: "145px 1fr", gap: 12, padding: "13px 14px", borderRadius: 14, background: p.soft, border: `1px solid ${p.line}` }}>
               <strong style={{ color: p.muted }}>{k}</strong>
-              <span style={{ fontFamily: k === "Token" ? "ui-monospace, SFMono-Regular, Menlo, monospace" : "inherit" }}>{v}</span>
+              <span style={{ fontFamily: k === "Token" || k === "Protocolo" ? "ui-monospace, SFMono-Regular, Menlo, monospace" : "inherit" }}>{v}</span>
             </div>
           ))}
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <h4 style={{ margin: "0 0 4px" }}>Eventos recentes</h4>
           <AnimatePresence initial={false}>
-            {logs.slice(0, 6).map((log) => (
+            {logs.slice(0, 7).map((log) => (
               <motion.div
                 key={log.id}
                 initial={{ opacity: 0, x: 20, scale: 0.98 }}
@@ -627,6 +630,7 @@ function CompareCard({ p, icon, title, items }) {
 }
 
 export default function App() {
+  const now = useClock();
   const [theme, setTheme] = useState("dark");
   const [cpf, setCpf] = useState("123.456.789-00");
   const [result, setResult] = useState(cases.liberado);
@@ -635,7 +639,6 @@ export default function App() {
   const [denied, setDenied] = useState(false);
   const [eventTime, setEventTime] = useState(new Date());
   const [stage, setStage] = useState(4);
-  // FIX 2: mensagem de erro para CPF incompleto
   const [inputError, setInputError] = useState("");
   const [logs, setLogs] = useState([
     { id: "initial-ok", status: "200 OK", type: "ok", message: "Consulta demonstrativa registrada com retorno mínimo." },
@@ -644,54 +647,70 @@ export default function App() {
   const p = themes[theme];
   const statusColor = result ? p[result.color] : p.blue;
   const token = useMemo(() => makeToken(cpf, eventTime), [cpf, eventTime]);
+  const protocol = useMemo(() => makeProtocol(eventTime), [eventTime]);
 
   function addLog(type, status, message) {
-    setLogs((old) => [{ id: `${Date.now()}-${Math.random()}`, type, status, message }, ...old].slice(0, 9));
+    setLogs((old) => [{ id: `${Date.now()}-${Math.random()}`, type, status, message }, ...old].slice(0, 10));
+  }
+
+  function resetForTyping(value) {
+    setCpf(formatCpf(value));
+    setResult(null);
+    setDenied(false);
+    setInputError("");
+    setStage(0);
   }
 
   function consultar(e) {
     e.preventDefault();
-    // FIX 2: valida CPF incompleto antes de qualquer coisa
     const digits = cpf.replace(/\D/g, "");
     if (digits.length < 11) {
       setInputError("CPF incompleto — informe os 11 dígitos para consultar.");
+      setStage(0);
       return;
     }
+
     setInputError("");
     const next = decide(cpf) || cases.nao;
-    // FIX 1: nova consulta limpa qualquer bloqueio anterior, inclusive dos logs
+    const newEventTime = new Date();
+
     setDenied(false);
     setLogs((old) => old.filter((l) => l.type !== "blocked"));
     setLoading(true);
-    setEventTime(new Date());
+    setEventTime(newEventTime);
     setStage(0);
-    [1, 2, 3, 4].forEach((n, i) => setTimeout(() => setStage(n), 180 + i * 230));
+
+    setTimeout(() => { setStage(1); addLog("ok", "ETAPA 1", "CPF recebido e mascarado para consulta."); }, 180);
+    setTimeout(() => { setStage(2); addLog("ok", "ETAPA 2", "Token temporário gerado para processamento."); }, 420);
+    setTimeout(() => { setStage(3); addLog("ok", "ETAPA 3", "Finalidade de matrícula escolar validada."); }, 660);
+    setTimeout(() => { setStage(4); addLog("ok", "ETAPA 4", "Consulta interna simulada na Saúde concluída."); }, 900);
+
     setTimeout(() => {
       setResult(next);
       setLoading(false);
       setView("educacao");
-      addLog("ok", "200 OK", `Consulta de matrícula retornou ${next.status}.`);
+      addLog("ok", "200 OK", `Consulta de matrícula retornou ${next.status}. Protocolo ${makeProtocol(newEventTime)}.`);
     }, 1180);
   }
 
   function useDemo(c) {
+    const newEventTime = new Date();
     setCpf(formatCpf(c.cpf));
     setResult(c);
-    setInputError(""); // FIX 2
-    // FIX 1: selecionar cenário também limpa bloqueio dos logs
+    setInputError("");
     setDenied(false);
     setLogs((old) => old.filter((l) => l.type !== "blocked"));
-    setEventTime(new Date());
+    setEventTime(newEventTime);
     setStage(4);
     setView("educacao");
-    addLog("ok", "200 OK", `Cenário demonstrativo selecionado: ${c.status}.`);
+    addLog("ok", "200 OK", `Cenário demonstrativo selecionado: ${c.status}. Protocolo ${makeProtocol(newEventTime)}.`);
   }
 
   function bloquear() {
     setDenied(true);
     setView("auditoria");
     setEventTime(new Date());
-    addLog("blocked", "403 BLOQUEADO", "Tentativa de acessar dados restritos bloqueada por finalidade incompatível.");
+    addLog("blocked", "403 BLOQUEADO", "Evento: tentativa_acesso_dados_restritos · Motivo: finalidade incompatível · Ação: bloqueado automaticamente.");
   }
 
   const css = `
@@ -707,27 +726,22 @@ export default function App() {
     @keyframes pulseDot{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.35);opacity:1}}
     @keyframes scanLine{0%{transform:translateY(-120%);opacity:0}30%{opacity:1}100%{transform:translateY(360%);opacity:0}}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-    /* Foco de teclado visivel — acessibilidade */
     a:focus-visible,button:focus-visible,input:focus-visible{
       outline:2px solid ${p.blue};outline-offset:3px;border-radius:6px;
     }
-    /* Tablet */
     @media(max-width:1024px){
       .grid4{grid-template-columns:repeat(2,1fr)}
       .grid3{grid-template-columns:repeat(2,1fr)}
     }
-    /* Celular */
     @media(max-width:900px){
       .grid2,.grid3,.grid4{grid-template-columns:1fr!important}
       .heroTitle{font-size:46px!important}
       .hideMobile{display:none!important}
       .wrap{padding:0 18px}
     }
-    /* Celular pequeno */
     @media(max-width:480px){
       .heroTitle{font-size:36px!important}
     }
-    /* Respeita quem desativou animacoes no sistema */
     @media(prefers-reduced-motion:reduce){
       *{animation-duration:.01ms!important;animation-iteration-count:1!important}
       html{scroll-behavior:auto}
@@ -764,7 +778,7 @@ export default function App() {
             <a href="#comparativo">Diferenças</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <LiveClock p={p} compact />
+            <LiveClock p={p} compact now={now} />
             <button aria-label="Alternar tema" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} style={{ width: 42, height: 42, borderRadius: 14, border: `1px solid ${p.line}`, background: p.soft, color: p.text, cursor: "pointer" }}>
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -773,12 +787,15 @@ export default function App() {
       </nav>
 
       <section className="wrap" style={{ padding: "72px 24px 48px", position: "relative", zIndex: 1 }}>
-        <Pill p={p} c={p.green}><Sparkles size={15} /> Protótipo para avaliação</Pill>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <Pill p={p} c={p.green}><Sparkles size={15} /> Protótipo para avaliação</Pill>
+          <Pill p={p} c={p.amber}>Dados 100% simulados</Pill>
+        </div>
         <h1 className="heroTitle" style={{ fontSize: "clamp(36px, 7vw, 78px)", lineHeight: 0.96, letterSpacing: "-.07em", maxWidth: 970, margin: "24px 0 20px" }}>
           Cada secretaria enxerga uma tela diferente.
         </h1>
         <p style={{ maxWidth: 820, color: p.muted, fontSize: "clamp(16px, 2.2vw, 19px)", lineHeight: 1.7 }}>
-          A Educação consulta o CPF para matrícula. A Saúde calcula internamente. A família recebe orientação. A auditoria registra horário, agente, finalidade, token e bloqueios.
+          A Educação consulta o CPF para matrícula. A Saúde calcula internamente. A família recebe orientação. A auditoria registra horário, protocolo, agente, finalidade, token e bloqueios.
         </p>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 28 }}>
           <a href="#simulador" style={{ background: p.text, color: p.bg, padding: "15px 22px", borderRadius: 14, fontWeight: 900, display: "flex", gap: 8, alignItems: "center" }}>
@@ -807,7 +824,7 @@ export default function App() {
                 <p style={{ color: p.muted, margin: 0 }}>Entrada controlada, com horário em tempo real e finalidade declarada.</p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <LiveClock p={p} />
+                <LiveClock p={p} now={now} />
                 <div style={{ color: p.green, fontSize: 12, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 99, background: p.green, animation: "pulseDot 1.8s infinite" }} />
                   sessão ativa
@@ -823,14 +840,13 @@ export default function App() {
               <input
                 id="cpf-input"
                 value={cpf}
-                onChange={(e) => { setCpf(formatCpf(e.target.value)); setResult(null); setDenied(false); setInputError(""); }}
+                onChange={(e) => resetForTyping(e.target.value)}
                 placeholder="123.456.789-00"
                 inputMode="numeric"
                 aria-invalid={!!inputError}
                 aria-describedby={inputError ? "cpf-error" : undefined}
                 style={{ width: "100%", margin: "10px 0 8px", padding: "18px 16px", borderRadius: 18, border: `1px solid ${inputError ? p.red : p.line}`, background: p.panelStrong, color: p.text, outline: "none", fontSize: 22, letterSpacing: ".04em" }}
               />
-              {/* FIX 2: aviso visual de CPF incompleto */}
               <AnimatePresence>
                 {inputError && (
                   <motion.div
@@ -912,7 +928,7 @@ export default function App() {
             {view === "educacao" && <EducationView p={p} r={result} c={statusColor} />}
             {view === "saude" && <HealthView p={p} r={result} />}
             {view === "familia" && <FamilyView p={p} r={result} c={statusColor} />}
-            {view === "auditoria" && <AuditView p={p} r={result} eventTime={eventTime} token={token} denied={denied} logs={logs} />}
+            {view === "auditoria" && <AuditView p={p} r={result} eventTime={eventTime} token={token} denied={denied} logs={logs} protocol={protocol} />}
           </motion.div>
         </AnimatePresence>
       </section>
@@ -923,7 +939,7 @@ export default function App() {
           <CompareCard p={p} icon={<GraduationCap color={p.amber} />} title="Educação vê" items={["Status administrativo", "Orientação de matrícula", "CPF mascarado", "Finalidade"]} />
           <CompareCard p={p} icon={<EyeOff color={p.green} />} title="Educação não vê" items={["Dados restritos", "Histórico sensível", "Detalhes privados", "Base interna da Saúde"]} />
           <CompareCard p={p} icon={<HeartPulse color={p.red} />} title="Saúde vê" items={["Situação interna", "Encaminhamento", "Ambiente restrito", "Cálculo do status"]} />
-          <CompareCard p={p} icon={<FileSearch color={p.purple} />} title="Auditoria vê" items={["Horário", "Agente", "Token", "Finalidade", "Bloqueios"]} />
+          <CompareCard p={p} icon={<FileSearch color={p.purple} />} title="Auditoria vê" items={["Horário", "Protocolo", "Agente", "Token", "Finalidade", "Bloqueios"]} />
         </div>
       </section>
 
