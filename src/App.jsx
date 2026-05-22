@@ -780,11 +780,55 @@ export default function App() {
   const [logs, setLogs] = useState([
     { id: "initial-ok", status: "200 OK", type: "ok", message: "Consulta demonstrativa registrada com retorno mínimo." },
   ]);
+  const [autoDemo, setAutoDemo] = useState(true);
+  const [autoBeat, setAutoBeat] = useState(0);
 
   const p = themes[theme];
   const statusColor = result ? p[result.color] : p.blue;
   const token = useMemo(() => makeToken(cpf, eventTime), [cpf, eventTime]);
   const protocol = useMemo(() => makeProtocol(eventTime), [eventTime]);
+
+  useEffect(() => {
+    if (!autoDemo || loading || inputError) return undefined;
+
+    const stageTimer = setInterval(() => {
+      setStage((current) => (current >= 4 ? 0 : current + 1));
+      setAutoBeat((beat) => beat + 1);
+    }, 950);
+
+    return () => clearInterval(stageTimer);
+  }, [autoDemo, loading, inputError]);
+
+  useEffect(() => {
+    if (!autoDemo || loading || inputError) return undefined;
+
+    const tabs = ["educacao", "saude", "familia", "auditoria"];
+    const viewTimer = setInterval(() => {
+      setView((current) => {
+        const index = tabs.indexOf(current);
+        return tabs[(index + 1 + tabs.length) % tabs.length];
+      });
+    }, 5200);
+
+    return () => clearInterval(viewTimer);
+  }, [autoDemo, loading, inputError]);
+
+  useEffect(() => {
+    if (!autoDemo || loading || inputError) return undefined;
+
+    const scenarioList = Object.values(cases);
+    const scenarioTimer = setInterval(() => {
+      const next = scenarioList[Math.floor(Date.now() / 13000) % scenarioList.length];
+      const newEventTime = new Date();
+      setCpf(formatCpf(next.cpf));
+      setResult(next);
+      setDenied(false);
+      setEventTime(newEventTime);
+      addLog("ok", "AUTO DEMO", `Demonstração contínua alternou para ${next.status}. Protocolo ${makeProtocol(newEventTime)}.`);
+    }, 13000);
+
+    return () => clearInterval(scenarioTimer);
+  }, [autoDemo, loading, inputError]);
 
   function addLog(type, status, message) {
     setLogs((old) => [{ id: `${Date.now()}-${Math.random()}`, type, status, message }, ...old].slice(0, 10));
@@ -925,6 +969,27 @@ export default function App() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LiveClock p={p} compact now={now} />
+            <button
+              aria-label={autoDemo ? "Pausar demonstração automática" : "Ativar demonstração automática"}
+              onClick={() => setAutoDemo((value) => !value)}
+              style={{
+                border: `1px solid ${autoDemo ? p.green : p.line}`,
+                background: autoDemo ? `${p.green}18` : p.soft,
+                color: autoDemo ? p.green : p.text,
+                cursor: "pointer",
+                borderRadius: 14,
+                padding: "11px 12px",
+                fontWeight: 900,
+                fontSize: 12,
+                letterSpacing: ".06em",
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: autoDemo ? p.green : p.muted, animation: autoDemo ? "pulseDot 1.25s infinite" : "none" }} />
+              AUTO
+            </button>
             <button aria-label="Alternar tema" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} style={{ width: 42, height: 42, borderRadius: 14, border: `1px solid ${p.line}`, background: p.soft, color: p.text, cursor: "pointer" }}>
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -936,6 +1001,7 @@ export default function App() {
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Pill p={p} c={p.green}><Sparkles size={15} /> Protótipo para avaliação</Pill>
           <Pill p={p} c={p.amber}>Dados 100% simulados</Pill>
+          <Pill p={p} c={autoDemo ? p.green : p.muted}>{autoDemo ? "Animação contínua ativa" : "Animação contínua pausada"}</Pill>
         </div>
         <h1 className="heroTitle" style={{ fontSize: "clamp(36px, 7vw, 78px)", lineHeight: 0.96, letterSpacing: "-.07em", maxWidth: 970, margin: "24px 0 20px" }}>
           Cada secretaria enxerga uma tela diferente.
@@ -987,6 +1053,17 @@ export default function App() {
       <section className="wrap" style={{ padding: "0 24px 54px", position: "relative", zIndex: 1 }}>
         <SectionTitle p={p} eyebrow="Fluxo operacional" title="Do CPF ao resultado, com movimento" text="O avaliador vê uma experiência guiada, com feedback visual em cada etapa da consulta." />
         <Card p={p}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 4 }}>
+            <Pill p={p} c={autoDemo ? p.green : p.blue}>{autoDemo ? "Fluxo automático" : "Fluxo manual"}</Pill>
+            <motion.span
+              key={autoBeat}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{ color: p.muted, fontSize: 12, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
+              etapa {stage + 1}/5
+            </motion.span>
+          </div>
           <FlowRail p={p} stage={stage} />
         </Card>
       </section>
