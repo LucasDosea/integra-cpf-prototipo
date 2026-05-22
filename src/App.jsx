@@ -635,6 +635,8 @@ export default function App() {
   const [denied, setDenied] = useState(false);
   const [eventTime, setEventTime] = useState(new Date());
   const [stage, setStage] = useState(4);
+  // FIX 2: mensagem de erro para CPF incompleto
+  const [inputError, setInputError] = useState("");
   const [logs, setLogs] = useState([
     { id: "initial-ok", status: "200 OK", type: "ok", message: "Consulta demonstrativa registrada com retorno mínimo." },
   ]);
@@ -649,8 +651,17 @@ export default function App() {
 
   function consultar(e) {
     e.preventDefault();
+    // FIX 2: valida CPF incompleto antes de qualquer coisa
+    const digits = cpf.replace(/\D/g, "");
+    if (digits.length < 11) {
+      setInputError("CPF incompleto — informe os 11 dígitos para consultar.");
+      return;
+    }
+    setInputError("");
     const next = decide(cpf) || cases.nao;
+    // FIX 1: nova consulta limpa qualquer bloqueio anterior, inclusive dos logs
     setDenied(false);
+    setLogs((old) => old.filter((l) => l.type !== "blocked"));
     setLoading(true);
     setEventTime(new Date());
     setStage(0);
@@ -666,7 +677,10 @@ export default function App() {
   function useDemo(c) {
     setCpf(formatCpf(c.cpf));
     setResult(c);
+    setInputError(""); // FIX 2
+    // FIX 1: selecionar cenário também limpa bloqueio dos logs
     setDenied(false);
+    setLogs((old) => old.filter((l) => l.type !== "blocked"));
     setEventTime(new Date());
     setStage(4);
     setView("educacao");
@@ -693,10 +707,30 @@ export default function App() {
     @keyframes pulseDot{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.35);opacity:1}}
     @keyframes scanLine{0%{transform:translateY(-120%);opacity:0}30%{opacity:1}100%{transform:translateY(360%);opacity:0}}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    /* Foco de teclado visivel — acessibilidade */
+    a:focus-visible,button:focus-visible,input:focus-visible{
+      outline:2px solid ${p.blue};outline-offset:3px;border-radius:6px;
+    }
+    /* Tablet */
+    @media(max-width:1024px){
+      .grid4{grid-template-columns:repeat(2,1fr)}
+      .grid3{grid-template-columns:repeat(2,1fr)}
+    }
+    /* Celular */
     @media(max-width:900px){
       .grid2,.grid3,.grid4{grid-template-columns:1fr!important}
       .heroTitle{font-size:46px!important}
       .hideMobile{display:none!important}
+      .wrap{padding:0 18px}
+    }
+    /* Celular pequeno */
+    @media(max-width:480px){
+      .heroTitle{font-size:36px!important}
+    }
+    /* Respeita quem desativou animacoes no sistema */
+    @media(prefers-reduced-motion:reduce){
+      *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+      html{scroll-behavior:auto}
     }
   `;
 
@@ -740,10 +774,10 @@ export default function App() {
 
       <section className="wrap" style={{ padding: "72px 24px 48px", position: "relative", zIndex: 1 }}>
         <Pill p={p} c={p.green}><Sparkles size={15} /> Protótipo para avaliação</Pill>
-        <h1 className="heroTitle" style={{ fontSize: 78, lineHeight: 0.96, letterSpacing: "-.07em", maxWidth: 970, margin: "24px 0 20px" }}>
+        <h1 className="heroTitle" style={{ fontSize: "clamp(36px, 7vw, 78px)", lineHeight: 0.96, letterSpacing: "-.07em", maxWidth: 970, margin: "24px 0 20px" }}>
           Cada secretaria enxerga uma tela diferente.
         </h1>
-        <p style={{ maxWidth: 820, color: p.muted, fontSize: 19, lineHeight: 1.7 }}>
+        <p style={{ maxWidth: 820, color: p.muted, fontSize: "clamp(16px, 2.2vw, 19px)", lineHeight: 1.7 }}>
           A Educação consulta o CPF para matrícula. A Saúde calcula internamente. A família recebe orientação. A auditoria registra horário, agente, finalidade, token e bloqueios.
         </p>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 28 }}>
@@ -785,26 +819,48 @@ export default function App() {
               <SessionCard p={p} title="Finalidade declarada" lines={[agent.purpose, "permite: status administrativo", "bloqueia: dados restritos"]} highlight />
             </div>
             <form onSubmit={consultar}>
-              <label style={{ color: p.muted, fontSize: 14 }}>CPF fictício</label>
+              <label htmlFor="cpf-input" style={{ color: p.muted, fontSize: 14 }}>CPF fictício</label>
               <input
+                id="cpf-input"
                 value={cpf}
-                onChange={(e) => { setCpf(formatCpf(e.target.value)); setResult(null); setDenied(false); }}
+                onChange={(e) => { setCpf(formatCpf(e.target.value)); setResult(null); setDenied(false); setInputError(""); }}
                 placeholder="123.456.789-00"
                 inputMode="numeric"
-                style={{ width: "100%", margin: "10px 0 14px", padding: "18px 16px", borderRadius: 18, border: `1px solid ${p.line}`, background: p.panelStrong, color: p.text, outline: "none", fontSize: 22, letterSpacing: ".04em" }}
+                aria-invalid={!!inputError}
+                aria-describedby={inputError ? "cpf-error" : undefined}
+                style={{ width: "100%", margin: "10px 0 8px", padding: "18px 16px", borderRadius: 18, border: `1px solid ${inputError ? p.red : p.line}`, background: p.panelStrong, color: p.text, outline: "none", fontSize: 22, letterSpacing: ".04em" }}
               />
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                {Object.values(cases).map((c) => (
-                  <motion.button
-                    key={c.status}
-                    whileTap={{ scale: 0.96 }}
-                    type="button"
-                    onClick={() => useDemo(c)}
-                    style={{ border: `1px solid ${p[c.color]}55`, background: `${p[c.color]}14`, color: p[c.color], borderRadius: 999, padding: "9px 12px", fontWeight: 900, cursor: "pointer", fontSize: 12 }}
+              {/* FIX 2: aviso visual de CPF incompleto */}
+              <AnimatePresence>
+                {inputError && (
+                  <motion.div
+                    id="cpf-error"
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, color: p.red, fontSize: 13, fontWeight: 700, margin: "0 0 12px" }}
                   >
-                    {c.status}
-                  </motion.button>
-                ))}
+                    <AlertTriangle size={15} /> {inputError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: inputError ? "0 0 14px" : "8px 0 14px" }}>
+                {Object.values(cases).map((c) => {
+                  const activeScenario = result && result.status === c.status;
+                  return (
+                    <motion.button
+                      key={c.status}
+                      whileTap={{ scale: 0.96 }}
+                      type="button"
+                      onClick={() => useDemo(c)}
+                      aria-pressed={activeScenario}
+                      style={{ border: `1px solid ${p[c.color]}${activeScenario ? "" : "55"}`, background: `${p[c.color]}${activeScenario ? "2e" : "14"}`, color: p[c.color], borderRadius: 999, padding: "9px 12px", fontWeight: 900, cursor: "pointer", fontSize: 12 }}
+                    >
+                      {c.status}
+                    </motion.button>
+                  );
+                })}
               </div>
               <motion.button
                 whileTap={{ scale: 0.98 }}
@@ -843,6 +899,7 @@ export default function App() {
               key={id}
               whileTap={{ scale: 0.96 }}
               onClick={() => setView(id)}
+              aria-pressed={view === id}
               style={{ padding: "12px 16px", borderRadius: 999, border: `1px solid ${view === id ? x : p.line}`, background: view === id ? `${x}18` : p.soft, color: p.text, cursor: "pointer", fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}
             >
               <Icon size={16} color={x} />
